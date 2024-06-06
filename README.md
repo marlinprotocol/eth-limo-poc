@@ -17,7 +17,7 @@ Note: Current setup expects the environment used is `ARM64` and the deployment e
 
 ## Deploy on Oyster
 
-Deploy on oyster by following the instructions in [docs](https://docs.marlin.org/user-guides/oyster/instances/quickstart/deploy). Once the enclave is deployed, please make a note of the IP address of the enclave.
+Deploy on Oyster at the [Marlin hub](https://hub.marlin.org/oyster/) by following the instructions in [docs](https://docs.marlin.org/user-guides/oyster/instances/quickstart/deploy). Once the enclave is deployed, please make a note of the IP address of the enclave.
 
 ## Test
 
