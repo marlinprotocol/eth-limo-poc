@@ -1,5 +1,5 @@
 # Builder
-FROM node:20-bullseye-slim as build
+FROM node:20-alpine as build
 
 WORKDIR /build
 
@@ -7,16 +7,27 @@ COPY . .
 
 WORKDIR /build
 
-RUN apt-get update && \
-    apt-get install -y \
-        --no-install-recommends \ 
-          python3 \
-    build-essential \
-    ca-certificates && \
+RUN apk update && \
+    apk add \
+        python3 \
+        alpine-sdk \
+        binutils-gold \
+        linux-headers \
+        git \
+        wget \
+        bash \
+        ca-certificates && \
     # useradd -u 10005 dwebapi && \
     # tail -n 1 /etc/passwd >/etc/passwd.scratch && \
     npm install && \
     npm run build
+RUN cd /build && \
+    git clone https://github.com/ipfs/kubo.git && \
+    wget -O go.tar.gz https://go.dev/dl/go1.22.4.linux-arm64.tar.gz && \
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go.tar.gz && \
+    export PATH=$PATH:/usr/local/go/bin && \
+    cd kubo && \
+    make build
 
 # base image
 FROM redis:alpine3.18 as runtime
@@ -74,7 +85,7 @@ RUN chmod +x /app/entrypoint.sh
 RUN wget -O caddy "https://caddyserver.com/api/download?os=linux&arch=arm64"
 RUN chmod +x /app/caddy
 COPY --from=build /build/Caddyfile .
-COPY --from=build /build/ipfs .
+COPY --from=build /build/kubo/cmd/ipfs/ipfs .
 RUN chmod +x /app/ipfs
 
 # RUN mkdir -p /home/dwebapi
