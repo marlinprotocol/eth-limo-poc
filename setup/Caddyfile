@@ -1,0 +1,54 @@
+{
+	admin off
+	auto_https off
+
+	local_certs
+
+	log {
+		level DEBUG
+		format console
+	}
+}
+
+&(dweb-api) {
+	reverse_proxy localhost:8888 {
+		transport http
+
+		method GET
+		header_up Host (.*[-a-z0-9]+\.eth) $1
+
+		@proxy status 200
+		handle_response @proxy {
+			@trailing vars_regexp trailing {rp.header.X-Content-Path} ^(.*)/$
+			reverse_proxy @trailing {rp.header.X-Content-Location} {
+				rewrite {re.trailing.1}{uri}
+				header_up Host {rp.header.X-Content-Location}
+				header_up -X-Forwarded-Host
+
+				transport http {
+					dial_timeout 2s
+				}
+
+				@redirect301 status 301
+				handle_response @redirect301 {
+					redir {rp.header.Location} permanent
+				}
+			}
+		}
+	}
+}
+
+:8443 {
+	log {
+		level INFO
+		format console
+	}
+
+	bind 0.0.0.0
+
+	tls internal {
+		on_demand
+	}
+
+	invoke dweb-api
+}
